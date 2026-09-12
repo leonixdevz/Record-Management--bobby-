@@ -264,7 +264,7 @@ function authMiddleware(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   const session = token ? sessions.get(token) : null;
-  if (!session || Date.now() > session.expiresAt) return res.status(401).json({ error: 'Unauthorized' });
+  if (!session) return res.status(401).json({ error: 'Unauthorized' });
   req.user = session.username;
   next();
 }
