@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrections Queue - Record System</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-brand">Record System</div>
+        <div class="nav-links">
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/settings.html">Settings</a>
+            <button id="logoutBtn">Logout</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>Name Corrections & Complaints</h1>
+        <p>Students submit name-only correction requests here. Review and approve/reject.</p>
+
+        <div id="correctionsList" class="grid-layout">
+            <!-- Corrections cards loaded here -->
+            <p class="empty-state">Loading corrections...</p>
+        </div>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script>
+        async function loadCorrections() {
+            try {
+                const corrections = await api.getCorrections();
+                const container = document.getElementById('correctionsList');
+
+                if (corrections.length === 0) {
+                    container.innerHTML = '<p class="empty-state">No corrections submitted yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = corrections.map(corr => `
+                    <div class="card correction-card" style="border-left: 4px solid ${corr.status === 'pending' ? 'var(--primary)' : corr.status === 'approved' ? 'var(--success)' : 'var(--danger)'}">
+                        <div class="correction-header">
+                            <h3>Correction #${corr.id.substring(0, 6)}</h3>
+                            <span class="status-badge ${corr.status}">${corr.status.toUpperCase()}</span>
+                        </div>
+                        <div class="correction-body">
+                            <p><strong>Student ID:</strong> ${corr.studentId || '(not provided)'}</p>
+                            <p><strong>Current Name:</strong> ${corr.currentName || '(not set)'}</p>
+                            <p><strong>Requested Name:</strong> ${corr.requestedName}</p>
+                            ${corr.note ? `<p><strong>Note:</strong> ${corr.note}</p>` : ''}
+                            <p><small>Submitted: ${new Date(corr.createdAt).toLocaleString()}</small></p>
+                        </div>
+                        ${corr.status === 'pending' ? `
+                            <div class="correction-actions">
+                                <button onclick="decideCorrection('${corr.id}', 'approve')" class="btn-sm btn-success">Approve</button>
+                                <button onclick="decideCorrection('${corr.id}', 'reject')" class="btn-sm btn-danger">Reject</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('correctionsList').innerHTML = `<p class="error-msg">Failed to load corrections: ${e.message}</p>`;
+            }
+        }
+
+        async function decideCorrection(id, action) {
+            if (!confirm(`${action === 'approve' ? 'Approve' : 'Reject'} this correction?`)) return;
+            try {
+                await api.decideCorrection(id, action);
+                loadCorrections();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        document.getElementById('logoutBtn').onclick = async () => {
+            await api.logout();
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        };
+
+        window.onload = loadCorrections;
+    </script>
+</body>
+</html>

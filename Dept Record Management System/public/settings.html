@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Record System</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-brand">Record System</div>
+        <div class="nav-links">
+            <a href="/dashboard.html">Collections</a>
+            <a href="/corrections.html">Corrections</a>
+            <a href="#" class="active">Settings</a>
+            <button id="logoutBtn">Logout</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>Settings</h1>
+
+        <div class="card" style="max-width: 640px; margin-top: 1.5rem;">
+            <h2 style="color: var(--danger);">Danger Zone</h2>
+            <p>Clearing the database deletes <strong>all</strong> accounts, departments, collections, records, courses and corrections. The app will return to first-run setup and show the registration page again. This cannot be undone.</p>
+            <button class="btn-danger" id="clearBtn" style="margin-top: 1rem;">Clear Database</button>
+            <div id="status" style="margin-top: 1rem;"></div>
+        </div>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.getElementById('clearBtn').onclick = async () => {
+            const status = document.getElementById('status');
+            const btn = document.getElementById('clearBtn');
+
+            if (!confirm('WARNING: This will permanently delete ALL data (accounts, collections, records). Continue?')) return;
+            if (!confirm('This cannot be undone. Are you really sure?')) return;
+
+            btn.disabled = true;
+            status.textContent = 'Clearing database...';
+
+            try {
+                await api.request('/api/admin/clear', { method: 'POST' });
+                localStorage.removeItem('token');
+                status.textContent = 'Database cleared. Redirecting to setup...';
+                window.location.href = '/';
+            } catch (e) {
+                status.textContent = 'Failed: ' + e.message;
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        document.getElementById('logoutBtn').onclick = async () => {
+            await api.logout();
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        };
+    </script>
+</body>
+</html>

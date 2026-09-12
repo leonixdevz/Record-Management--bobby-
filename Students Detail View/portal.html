@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - Record System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-brand">Student Portal</div>
+        <div class="nav-links">
+            <button class="btn-link" id="logoutBtn">Logout</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="welcome">
+            <h1>Welcome, <span id="studentName"></span><span class="cgpa-pill" id="cgpaPill" style="display:none;"></span></h1>
+            <p class="dept">Department: <span id="deptName"></span></p>
+        </section>
+
+        <section class="card">
+            <h2>Your Record</h2>
+            <div id="recordDetails">
+                <p>Loading your record...</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Your Courses</h2>
+            <div id="coursesList">
+                <p>Loading your courses...</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Name Correction / Complaint</h2>
+            <p>If your name is misspelled in the records, you can submit a correction request here. Only the name field can be changed.</p>
+            <form id="correctionForm">
+                <div class="form-group">
+                    <label>Requested Name (as it should appear)</label>
+                    <input type="text" id="requestedName" required placeholder="Enter your full name as it should be corrected">
+                </div>
+                <div class="form-group">
+                    <label>Additional Note (optional)</label>
+                    <textarea id="correctionNote" rows="3" placeholder="Any additional details"></textarea>
+                </div>
+                <button type="submit" class="btn-primary" id="submitCorrection">Submit Correction</button>
+            </form>
+            <div id="correctionStatus" class="correction-status"></div>
+        </section>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Get data from localStorage set by login
+        const recordId = localStorage.getItem('studentRecordId');
+        const studentName = localStorage.getItem('studentName');
+        const deptName = localStorage.getItem('deptName');
+
+        if (!recordId) {
+            window.location.href = '/students-detail/';
+        }
+
+        document.getElementById('studentName').textContent = studentName;
+        document.getElementById('deptName').textContent = deptName;
+
+        // Load student data and courses
+        async function loadStudentData() {
+            try {
+                const [data, courses] = await Promise.all([
+                    api.studentData(recordId),
+                    api.studentCourses(recordId)
+                ]);
+
+                // Show student data (excluding internal fields) as a styled grid
+                const recordContainer = document.getElementById('recordDetails');
+                const fields = Object.keys(data).filter(key => key !== 'pin' && key !== 'id' && key !== 'createdAt' && key !== 'courses');
+                if (fields.length === 0) {
+                    recordContainer.innerHTML = '<p class="empty">No record details available.</p>';
+                } else {
+                    recordContainer.innerHTML = `<div class="record-grid">${fields.map(key => `
+                        <div class="record-field">
+                            <div class="label">${key.replace(/_/g, ' ').replace(/(^|\s)\S/g, m => m.toUpperCase())}</div>
+                            <div class="value">${data[key] ?? '—'}</div>
+                        </div>
+                    `).join('')}</div>`;
+                }
+
+                // Show courses grouped by session/level
+                const coursesContainer = document.getElementById('coursesList');
+                if (!Array.isArray(courses) || courses.length === 0) {
+                    coursesContainer.innerHTML = '<p class="empty">No courses recorded yet.</p>';
+                } else {
+                    const grouped = Object.groupBy(courses, c => `${c.session} | ${c.level}`);
+                    coursesContainer.innerHTML = Object.entries(grouped).map(([key, list]) => `
+                        <div class="course-group">
+                            <h3>${key}</h3>
+                            <table class="course-table">
+                                <thead>
+                                    <tr>
+                                        <th>Semester</th>
+                                        <th>Course Code</th>
+                                        <th>Course Title</th>
+                                        <th>Credit Units</th>
+                                        <th>Score</th>
+                                        <th>Grade Point</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${list.map(c => `
+                                        <tr>
+                                            <td>${c.semester}</td>
+                                            <td>${c.courseCode}</td>
+                                            <td>${c.courseTitle}</td>
+                                            <td>${c.creditUnits}</td>
+                                            <td>${c.score}</td>
+                                            <td>${c.gradePoint ?? gradePoint(c.score)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5" style="text-align:right;">Total:</td>
+                                        <td>${list.reduce((sum, c) => sum + (Number(c.creditUnits) || 0), 0)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5" style="text-align:right;">Weighted Points:</td>
+                                        <td>${list.reduce((sum, c) => sum + ((Number(c.gradePoint ?? gradePoint(c.score))) * (Number(c.creditUnits) || 0)), 0).toFixed(2)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    `).join('');
+                }
+
+                // Compute and show CGPA prominently
+                const cgpa = computeCgpa(courses);
+                const pill = document.getElementById('cgpaPill');
+                pill.textContent = `CGPA: ${cgpa}`;
+                pill.style.display = '';
+            } catch (e) {
+                document.getElementById('recordDetails').innerHTML = `<p class="error-msg">Failed to load data: ${e.message}</p>`;
+                document.getElementById('coursesList').innerHTML = `<p class="error-msg">Failed to load courses: ${e.message}</p>`;
+            }
+        }
+
+        // Helper functions (same as in records.html)
+        function gradePoint(score) {
+            const s = Number(score);
+            if (isNaN(s)) return 0;
+            if (s >= 70) return 5.0;
+            if (s >= 60) return 4.0;
+            if (s >= 50) return 3.0;
+            if (s >= 45) return 2.0;
+            if (s >= 40) return 1.0;
+            return 0.0;
+        }
+
+        function computeCgpa(courses) {
+            // Guard against courses being a non-array object (e.g. from bad data).
+            if (!Array.isArray(courses)) return '0.00';
+            let totalPoints = 0;
+            let totalUnits = 0;
+            courses.forEach(c => {
+                const cu = Number(c.creditUnits) || 0;
+                totalUnits += cu;
+                totalPoints += gradePoint(c.score) * cu;
+            });
+            if (totalUnits === 0) return '0.00';
+            return (totalPoints / totalUnits).toFixed(2);
+        }
+
+        // Handle correction form submission
+        document.getElementById('correctionForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitCorrection');
+            const statusEl = document.getElementById('correctionStatus');
+            btn.disabled = true;
+            statusEl.textContent = '';
+
+            const requestedName = document.getElementById('requestedName').value.trim();
+            const note = document.getElementById('correctionNote').value.trim();
+
+            if (!requestedName) {
+                statusEl.textContent = 'Please enter the requested name.';
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                const res = await api.fileCorrection({
+                    recordId,
+                    requestedName,
+                    note
+                });
+                statusEl.innerHTML = `<p class="success-msg">Correction submitted successfully! Status: ${res.status}</p>`;
+                document.getElementById('correctionForm').reset();
+            } catch (ex) {
+                statusEl.textContent = ex.message;
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        document.getElementById('logoutBtn').onclick = async () => {
+            await api.logout();
+            localStorage.removeItem('studentRecordId');
+            localStorage.removeItem('studentName');
+            localStorage.removeItem('deptName');
+            window.location.href = '/students-detail/';
+        };
+
+        window.onload = loadStudentData;
+    </script>
+</body>
+</html>

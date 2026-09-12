@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Record System</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .wizard-step { display: none; max-width: 520px; margin: 4rem auto; padding: 2rem; }
+        .wizard-step.active { display: block; }
+        .auth-card { max-width: 520px; margin: 4rem auto; }
+        .setup-list { margin: 1rem 0 1.5rem; padding-left: 1.2rem; color: var(--text-light); }
+        .setup-list li { margin-bottom: .35rem; }
+    </style>
+</head>
+<body class="auth-page">
+    <!-- Step 1: Register department -->
+    <div id="step1" class="wizard-step auth-card active">
+        <h1>Welcome</h1>
+        <p>Set up your department to get started. This creates your department profile and administrator account.</p>
+        <form id="deptForm">
+            <div class="form-group">
+                <label>Department Name</label>
+                <input type="text" id="deptName" required placeholder="e.g. Department of Computer Science">
+            </div>
+            <div class="form-group">
+                <label>Department Code</label>
+                <input type="text" id="deptCode" placeholder="e.g. CSC">
+            </div>
+            <div class="form-group">
+                <label>Institution</label>
+                <input type="text" id="institution" placeholder="e.g. Federal Polytechnic Ilaro">
+            </div>
+            <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0;">
+            <div class="form-group">
+                <label>Admin Full Name</label>
+                <input type="text" id="fullName" placeholder="Your full name">
+            </div>
+            <div class="form-group">
+                <label>Admin Username</label>
+                <input type="text" id="username" required placeholder="Choose a username">
+            </div>
+            <div class="form-group">
+                <label>Admin Password</label>
+                <input type="password" id="password" required minlength="6" placeholder="At least 6 characters">
+            </div>
+            <button type="submit" class="btn-primary" id="regBtn" style="width:100%;padding:.8rem;">Continue</button>
+        </form>
+        <div id="error" class="error-msg"></div>
+    </div>
+
+    <!-- Step 2: Onboarding — Schema Builder -->
+    <div id="step2" class="wizard-step auth-card" style="max-width:580px;text-align:left;">
+        <h1>Define Your Schema 🎉</h1>
+        <p>Create your first collection by adding fields below. You can drag to reorder, upload a JSON schema, or add fields manually.</p>
+
+        <div class="form-group">
+            <label>Collection Name</label>
+            <input type="text" id="colName" placeholder="e.g. Students" value="dept-students-field">
+        </div>
+
+        <div class="schema-builder">
+            <div class="builder-header">
+                <span>Fields</span>
+                <span id="fieldCountLabel">0 fields</span>
+            </div>
+            <div class="builder-list" id="builderList"></div>
+            <div class="builder-footer">
+                <button class="btn-add-field" id="addFieldBtn">+ Add Field</button>
+            </div>
+        </div>
+
+        <div style="margin-top:1.5rem; display:flex; gap:1rem;">
+            <button class="btn-secondary" id="skipBtn" style="flex:1;padding:.7rem;">Use Defaults</button>
+            <button class="btn-primary" id="modalConfirm" style="flex:1;padding:.7rem;">Create Collection</button>
+        </div>
+        <div id="error2" class="error-msg"></div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        /* ---- Step 1: Register department ---- */
+        document.getElementById('deptForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('regBtn');
+            const err = document.getElementById('error');
+            btn.disabled = true;
+            err.textContent = '';
+
+            const data = {
+                deptName: document.getElementById('deptName').value,
+                deptCode: document.getElementById('deptCode').value,
+                institution: document.getElementById('institution').value,
+                fullName: document.getElementById('fullName').value,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const res = await api.registerDept(data);
+                localStorage.setItem('token', res.token);
+                await api.onboard();
+                document.getElementById('step1').classList.remove('active');
+                document.getElementById('step2').classList.add('active');
+            } catch (ex) {
+                err.textContent = ex.message;
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        /* ---- Step 2: Schema Builder ---- */
+        let currentSchema = [];
+        const builderList = document.getElementById('builderList');
+        const fieldCountLabel = document.getElementById('fieldCountLabel');
+        const addFieldBtn = document.getElementById('addFieldBtn');
+        const error2 = document.getElementById('error2');
+
+        /**
+         * Generates a schema-safe name from a label.
+         * Converts to lowercase, replaces non-alphanumeric with underscores, trims underscores.
+         */
+        function generateNameFromLabel(label) {
+            if (!label) return '';
+            return label
+                .toString()
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '_')
+                .replace(/^_|_$/g, '');
+        }
+
+        function renderBuilder() {
+            fieldCountLabel.textContent = `${currentSchema.length} field${currentSchema.length === 1 ? '' : 's'}`;
+            builderList.innerHTML = '';
+
+            currentSchema.forEach((field, index) => {
+                const card = document.createElement('div');
+                card.className = 'field-card';
+                card.draggable = true;
+                card.dataset.id = field.id;
+
+                card.innerHTML = `
+                    <div class="drag-handle">⠿</div>
+                    <div class="form-group" style="margin:0">
+                        <input type="text" class="field-input" placeholder="Label" value="${field.label || ''}" onchange="updateFieldLabel(${field.id}, this.value)">
+                    </div>
+                    <div class="form-group" style="margin:0">
+                        <select class="field-input" onchange="updateField(${field.id}, 'type', this.value)">
+                            <option value="text"      ${field.type === 'text'      ? 'selected' : ''}>Text</option>
+                            <option value="number"    ${field.type === 'number'    ? 'selected' : ''}>Number</option>
+                            <option value="email"     ${field.type === 'email'     ? 'selected' : ''}>Email</option>
+                            <option value="date"      ${field.type === 'date'      ? 'selected' : ''}>Date</option>
+                            <option value="boolean"   ${field.type === 'boolean'   ? 'selected' : ''}>Boolean</option>
+                        </select>
+                    </div>
+                    <div class="field-checkbox-group">
+                        <input type="checkbox" ${field.required ? 'checked' : ''} onchange="updateField(${field.id}, 'required', this.checked)">
+                        <label>Required</label>
+                    </div>
+                    <button class="btn-remove-field" onclick="removeField(${field.id})" title="Remove Field">×</button>
+                `;
+
+                card.addEventListener('dragstart', (e) => {
+                    e.target.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', index);
+                });
+                card.addEventListener('dragend', (e) => {
+                    e.target.classList.remove('dragging');
+                });
+
+                builderList.appendChild(card);
+            });
+
+            builderList.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const draggingElement = document.querySelector('.dragging');
+                if (!draggingElement) return;
+                const afterElement = getDragAfterElement(builderList, e.clientY);
+                if (afterElement == null) {
+                    builderList.appendChild(draggingElement);
+                } else {
+                    builderList.insertBefore(draggingElement, afterElement);
+                }
+            });
+
+            builderList.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const newOrder = Array.from(builderList.children).map(child => {
+                    const id = parseInt(child.dataset.id);
+                    return currentSchema.find(f => f.id === id);
+                });
+                currentSchema = newOrder;
+                renderBuilder();
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.field-card:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        window.updateFieldLabel = (id, value) => {
+            const field = currentSchema.find(f => f.id === id);
+            if (field) {
+                field.label = value;
+                field.name = generateNameFromLabel(value);
+            }
+        };
+
+        window.updateField = (id, key, value) => {
+            const field = currentSchema.find(f => f.id === id);
+            if (field) {
+                field[key] = value;
+                fieldCountLabel.textContent = `${currentSchema.length} field${currentSchema.length === 1 ? '' : 's'}`;
+            }
+        };
+
+        window.removeField = (id) => {
+            currentSchema = currentSchema.filter(f => f.id !== id);
+            renderBuilder();
+        };
+
+        addFieldBtn.onclick = () => {
+            currentSchema.push({
+                id: Date.now(),
+                name: '',
+                label: '',
+                type: 'text',
+                required: false
+            });
+            renderBuilder();
+        };
+
+        async function handleSchemaFile(file) {
+            if (!file) return;
+            const text = await file.text();
+            try {
+                const parsed = JSON.parse(text);
+                if (!Array.isArray(parsed)) throw new Error('Schema must be a JSON array.');
+                currentSchema = parsed.map((f, i) => ({
+                    id: Date.now() + i,
+                    label: f.label || '',
+                    name: generateNameFromLabel(f.label || ''),
+                    type: f.type || 'text',
+                    required: f.required !== undefined ? f.required : false
+                }));
+                renderBuilder();
+            } catch (err) {
+                alert('Invalid JSON schema. Please upload a valid JSON array.');
+            }
+        }
+
+        /* Confirm: create collection and proceed */
+        document.getElementById('modalConfirm').onclick = async () => {
+            error2.textContent = '';
+            const name = document.getElementById('colName').value.trim();
+            if (!name) {
+                error2.textContent = 'Please enter a collection name.';
+                return;
+            }
+            if (currentSchema.length === 0) {
+                error2.textContent = 'Please add at least one field to the schema.';
+                return;
+            }
+            const schema = currentSchema.map(({ id, ...rest }) => rest);
+            try {
+                const res = await api.onboard({ name, schema });
+                // Redirect to the records view (dashboard) for the newly created collection
+                window.location.href = `/dashboard.html?colId=${res.collection.id}`;
+            } catch (ex) {
+                error2.textContent = ex.message;
+            }
+        };
+
+        /* Use Defaults: create the pre-built student collection */
+        document.getElementById('skipBtn').onclick = async () => {
+            error2.textContent = '';
+            const defaultSchema = [
+                { name: 'student_id', label: 'Student ID', type: 'text', required: true },
+                { name: 'full_name',  label: 'Full Name',  type: 'text', required: true },
+                { name: 'level',      label: 'Level',      type: 'text', required: true },
+                { name: 'cgpa',       label: 'CGPA',       type: 'number', required: false },
+                { name: 'pin',        label: 'Student PIN', type: 'text', required: false }
+            ];
+            try {
+                const res = await api.onboard({ name: 'dept-students-field', schema: defaultSchema });
+                window.location.href = `/dashboard.html?colId=${res.collection.id}`;
+            } catch (ex) {
+                error2.textContent = ex.message;
+            }
+        };
+
+        renderBuilder();
+
+        /* If setup is already complete, go to login */
+        api.setupStatus().then(s => {
+            if (s.setupDone) window.location.href = '/';
+        });
+    </script>
+</body>
+</html>
