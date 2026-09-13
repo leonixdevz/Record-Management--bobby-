@@ -519,6 +519,18 @@ table th:last-child {
     color: #fff;
 }
 
+.grid-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
 /* Student portal specific overrides */
 .welcome {
     text-align: center;
