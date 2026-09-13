@@ -71,7 +71,6 @@
         </div>
 
         <div style="margin-top:1.5rem; display:flex; gap:1rem;">
-            <button class="btn-secondary" id="skipBtn" style="flex:1;padding:.7rem;">Use Defaults</button>
             <button class="btn-primary" id="modalConfirm" style="flex:1;padding:.7rem;">Create Collection</button>
         </div>
         <div id="error2" class="error-msg"></div>
@@ -134,6 +133,9 @@
             builderList.innerHTML = '';
 
             currentSchema.forEach((field, index) => {
+                // Skip hidden fields in the UI
+                if (field.hidden) return;
+
                 const card = document.createElement('div');
                 card.className = 'field-card';
                 card.draggable = true;
@@ -224,6 +226,17 @@
         };
 
         window.removeField = (id) => {
+            const field = currentSchema.find(f => f.id === id);
+
+            // Guard against removing required fields: Student ID and Full Name
+            if (field && (field.name === 'student_id' || field.name === 'full_name') && field.required) {
+                error2.textContent = 'Student ID and Full Name are required fields and cannot be removed.';
+                return;
+            }
+
+            // Clear any previous error when attempting to remove a field
+            error2.textContent = '';
+
             currentSchema = currentSchema.filter(f => f.id !== id);
             renderBuilder();
         };
@@ -250,7 +263,9 @@
                     label: f.label || '',
                     name: generateNameFromLabel(f.label || ''),
                     type: f.type || 'text',
-                    required: f.required !== undefined ? f.required : false
+                    required: f.required !== undefined ? f.required : false,
+                    // Preserve any additional properties like hidden, default
+                    ...f
                 }));
                 renderBuilder();
             } catch (err) {
@@ -280,24 +295,14 @@
             }
         };
 
-        /* Use Defaults: create the pre-built student collection */
-        document.getElementById('skipBtn').onclick = async () => {
-            error2.textContent = '';
-            const defaultSchema = [
-                { name: 'student_id', label: 'Student ID', type: 'text', required: true },
-                { name: 'full_name',  label: 'Full Name',  type: 'text', required: true },
-                { name: 'level',      label: 'Level',      type: 'text', required: true },
-                { name: 'cgpa',       label: 'CGPA',       type: 'number', required: false },
-                { name: 'pin',        label: 'Student PIN', type: 'text', required: false }
-            ];
-            try {
-                const res = await api.onboard({ name: 'dept-students-field', schema: defaultSchema });
-                window.location.href = `/dashboard.html?colId=${res.collection.id}`;
-            } catch (ex) {
-                error2.textContent = ex.message;
-            }
-        };
-
+        // Pre-load default schema on page load
+        currentSchema = [
+            { name: 'student_id', label: 'Student ID', type: 'text', required: true },
+            { name: 'full_name',  label: 'Full Name',  type: 'text', required: true },
+            { name: 'level',      label: 'Level',      type: 'text', required: true },
+            { name: 'cgpa',       label: 'CGPA',       type: 'number', required: false },
+            { name: 'pin',        label: 'Student PIN', type: 'text', required: false, hidden: true, default: '12345678' }
+        ];
         renderBuilder();
 
         /* If setup is already complete, go to login */
