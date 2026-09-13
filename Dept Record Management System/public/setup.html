@@ -213,7 +213,10 @@
             const field = currentSchema.find(f => f.id === id);
             if (field) {
                 field.label = value;
-                field.name = generateNameFromLabel(value);
+                // Protect the name field for student_id and full_name to maintain guard integrity
+                if (field.name !== 'student_id' && field.name !== 'full_name') {
+                    field.name = generateNameFromLabel(value);
+                }
             }
         };
 
@@ -228,8 +231,8 @@
         window.removeField = (id) => {
             const field = currentSchema.find(f => f.id === id);
 
-            // Guard against removing required fields: Student ID and Full Name
-            if (field && (field.name === 'student_id' || field.name === 'full_name') && field.required) {
+            // Guard against removing required fields: Student ID and Full Name (absolute protection)
+            if (field && (field.name === 'student_id' || field.name === 'full_name')) {
                 error2.textContent = 'Student ID and Full Name are required fields and cannot be removed.';
                 return;
             }
@@ -296,12 +299,13 @@
         };
 
         // Pre-load default schema on page load
+        const baseId = Date.now();
         currentSchema = [
-            { name: 'student_id', label: 'Student ID', type: 'text', required: true },
-            { name: 'full_name',  label: 'Full Name',  type: 'text', required: true },
-            { name: 'level',      label: 'Level',      type: 'text', required: true },
-            { name: 'cgpa',       label: 'CGPA',       type: 'number', required: false },
-            { name: 'pin',        label: 'Student PIN', type: 'text', required: false, hidden: true, default: '12345678' }
+            { id: baseId, name: 'student_id', label: 'Student ID', type: 'text', required: true },
+            { id: baseId + 1, name: 'full_name',  label: 'Full Name',  type: 'text', required: true },
+            { id: baseId + 2, name: 'level',      label: 'Level',      type: 'text', required: true },
+            { id: baseId + 3, name: 'cgpa',       label: 'CGPA',       type: 'number', required: false },
+            { id: baseId + 4, name: 'pin',        label: 'Student PIN', type: 'text', required: false, hidden: true, default: '12345678' }
         ];
         renderBuilder();
 
