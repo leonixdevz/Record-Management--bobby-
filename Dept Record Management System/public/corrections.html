@@ -5,20 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corrections Queue - Record System</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
 </head>
 <body>
     <nav class="main-nav">
-        <div class="nav-brand">Record System</div>
+        <div class="nav-brand"><span class="brand-mark">R</span>Record System</div>
         <div class="nav-links">
-            <a href="/dashboard.html">Dashboard</a>
+            <a href="/dashboard.html">Records</a>
+            <a href="/corrections.html" class="active">Corrections</a>
             <a href="/settings.html">Settings</a>
+            <span class="theme-slot"></span>
             <button id="logoutBtn">Logout</button>
+        </div>
         </div>
     </nav>
 
     <main class="container">
-        <h1>Name Corrections & Complaints</h1>
-        <p>Students submit name-only correction requests here. Review and approve/reject.</p>
+        <div class="header-row">
+            <div>
+                <h1>Name corrections &amp; complaints</h1>
+                <p>Students submit name-only correction requests here. Review and approve or reject each one.</p>
+            </div>
+        </div>
 
         <div id="correctionsList" class="grid-layout">
             <!-- Corrections cards loaded here -->
@@ -34,12 +42,18 @@
                 const container = document.getElementById('correctionsList');
 
                 if (corrections.length === 0) {
-                    container.innerHTML = '<p class="empty-state">No corrections submitted yet.</p>';
+                    container.innerHTML = `
+                        <div class="empty-hero" style="grid-column: 1 / -1;">
+                            <div class="empty-icon">✓</div>
+                            <h3>No corrections submitted yet</h3>
+                            <p>When students request name corrections from the portal, they will appear here for review.</p>
+                        </div>
+                    `;
                     return;
                 }
 
                 container.innerHTML = corrections.map(corr => `
-                    <div class="card correction-card" style="border-left: 4px solid ${corr.status === 'pending' ? 'var(--primary)' : corr.status === 'approved' ? 'var(--success)' : 'var(--danger)'}">
+                    <div class="card correction-card ${corr.status}" style="margin-bottom: 0;">
                         <div class="correction-header">
                             <h3>Correction #${corr.id.substring(0, 6)}</h3>
                             <span class="status-badge ${corr.status}">${corr.status.toUpperCase()}</span>

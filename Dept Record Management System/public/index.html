@@ -5,11 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Record System</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
 </head>
 <body class="auth-page">
+    <span class="theme-slot floating"></span>
     <div class="auth-card">
-        <h1>Record Management</h1>
-        <p>Administrator Access</p>
+        <div class="auth-brand">
+            <div class="brand-mark large">R</div>
+            <h1>Record Management</h1>
+            <p>Administrator access</p>
+        </div>
         <form id="loginForm">
             <div class="form-group">
                 <label>Username</label>
@@ -19,7 +24,7 @@
                 <label>Password</label>
                 <input type="password" id="password" required placeholder="Enter password">
             </div>
-            <button type="submit" id="loginBtn">Login</button>
+            <button type="submit" id="loginBtn" class="btn-primary" style="width:100%;padding:.8rem;">Login</button>
         </form>
         <div id="error" class="error-msg"></div>
     </div>

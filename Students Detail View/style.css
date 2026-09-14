@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
     --primary: #0F172A;
@@ -7,17 +7,19 @@
     --secondary: #64748B;
     --accent: #10B981;
     --accent-light: #34D399;
-    --background: #F8FAFC;
+    --accent-soft: rgba(16, 185, 129, 0.1);
+    --background: #F6F8FA;
     --card-bg: #FFFFFF;
     --border: #E2E8F0;
     --danger: #EF4444;
-    --radius: 8px;
+    --danger-soft: #FEF2F2;
+    --radius: 10px;
     --radius-sm: 6px;
     --radius-xs: 4px;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
     --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
     --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.1);
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     --font-mono: 'SFMono-Regular', Consolas, Menlo, monospace;
     --text: #0F172A;
     --text-muted: #64748B;
@@ -54,14 +56,30 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
+    padding: 0.875rem 2rem;
     box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 50;
 }
 
 .nav-brand {
-    font-weight: 700;
-    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-weight: 800;
+    font-size: 1.125rem;
     color: var(--primary);
+    letter-spacing: -0.01em;
+}
+
+.nav-brand .brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    margin: 0;
+    font-size: 0.95rem;
+    box-shadow: none;
 }
 
 .nav-links {
@@ -134,9 +152,10 @@ html, body {
 
 .auth-card h1 {
     margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1.75rem;
-    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 1.625rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     color: var(--primary);
 }
 
@@ -299,8 +318,11 @@ table td {
 
 table th {
     background: var(--background);
-    font-weight: 600;
-    color: var(--text);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -522,25 +544,29 @@ table th:last-child {
 /* Student portal specific overrides */
 .welcome {
     text-align: center;
-    padding: 3rem 0;
+    padding: 2.5rem 0 2rem;
 }
 
 .welcome h1 {
-    font-size: 2.25rem;
-    font-weight: 700;
+    font-size: 2.125rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     color: var(--primary);
     margin-bottom: 0.5rem;
+    text-wrap: balance;
 }
 
 .welcome .cgpa-pill {
     display: inline-block;
     background: var(--accent);
     color: #fff;
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 1.1rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 1rem;
     margin-left: 0.5rem;
+    vertical-align: middle;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
 }
 
 .dept {
@@ -556,23 +582,24 @@ table th:last-child {
 }
 
 .record-field {
-    background: var(--card-bg);
+    background: var(--background);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem;
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-sm);
+    padding: 0.875rem 1rem;
 }
 
 .record-field .label {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
-    font-weight: 500;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin-bottom: 0.25rem;
 }
 
 .record-field .value {
-    font-size: 1.125rem;
-    font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 700;
     color: var(--text);
     word-break: break-word;
 }
@@ -635,7 +662,7 @@ table th:last-child {
 .error-msg {
     color: var(--danger);
     background: #fee2e2;
-    border: 1px solid var(--danger);
+    border: 1px solid;
     border-radius: var(--radius);
     padding: 1rem;
     margin: 1rem 0;
@@ -648,6 +675,12 @@ table th:last-child {
     border-radius: var(--radius);
     padding: 1rem;
     margin: 1rem 0;
+}
+
+/* Message boxes stay invisible until they actually have content */
+.error-msg:empty,
+.success-msg:empty {
+    display: none;
 }
 
 .correction-status {
@@ -702,4 +735,190 @@ table th:last-child {
     .welcome h1 {
         font-size: 1.75rem;
     }
+}
+
+/* ================================================================== */
+/* Theme system (light / dark / system)                               */
+/* ================================================================== */
+
+/* Smooth switch between themes */
+body,
+.main-nav,
+.card,
+.record-field,
+.form-group input,
+.form-group textarea,
+.form-group select {
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* Theme switcher menu */
+.theme-slot {
+    display: inline-flex;
+}
+
+.theme-slot.floating {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
+}
+
+.theme-switch {
+    position: relative;
+    display: inline-flex;
+}
+
+.theme-switch .theme-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+}
+
+.theme-switch .theme-btn:hover {
+    color: var(--primary);
+    border-color: var(--primary-lighter);
+}
+
+.theme-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 150px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+ box-shadow: var(--shadow-lg);
+    padding: 6px;
+    z-index: 60;
+    animation: themeMenuIn 0.15s ease-out;
+}
+
+@keyframes themeMenuIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.theme-menu .theme-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.15s;
+}
+
+.theme-menu .theme-option:hover {
+    background: var(--background);
+}
+
+.theme-opt-icon {
+    width: 18px;
+    text-align: center;
+}
+
+.theme-check {
+    margin-left: auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.theme-menu .theme-option.selected .theme-check {
+    opacity: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark theme                                                          */
+/* ------------------------------------------------------------------ */
+:root[data-theme="dark"] {
+    --background: #0B1220;
+    --card-bg: #111A2C;
+    --primary: #E2E8F0;
+    --primary-light: #C7D2E0;
+    --primary-lighter: #94A3B8;
+    --secondary: #8FA3BF;
+    --accent: #34D399;
+    --accent-light: #6EE7B7;
+    --accent-soft: rgba(52, 211, 153, 0.12);
+    --danger: #F87171;
+    --danger-soft: rgba(239, 68, 68, 0.12);
+    --border: #24324A;
+    --text: #E6EDF6;
+    --text-muted: #94A3B8;
+    --text-light: #64748B;
+    --focus-ring: 0 0 0 3px rgba(52, 211, 153, 0.25);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.65);
+    color-scheme: dark;
+}
+
+[data-theme="dark"] .btn-primary {
+    background: var(--accent);
+    color: #052E22;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    background: var(--accent-light);
+}
+
+[data-theme="dark"] .btn-secondary {
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] .btn-sm:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] table th {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .error-msg {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(248, 113, 113, 0.4);
+    color: var(--danger);
+}
+
+[data-theme="dark"] .success-msg {
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.4);
+    color: var(--accent);
+}
+
+[data-theme="dark"] .course-table thead {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .cgpa-pill {
+    color: #052E22;
 }

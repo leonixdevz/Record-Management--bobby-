@@ -5,25 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - Record System</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
 </head>
 <body>
     <nav class="main-nav">
-        <div class="nav-brand">Record System</div>
+        <div class="nav-brand"><span class="brand-mark">R</span>Record System</div>
         <div class="nav-links">
-            <a href="/dashboard.html">Collections</a>
+            <a href="/dashboard.html">Records</a>
             <a href="/corrections.html">Corrections</a>
             <a href="#" class="active">Settings</a>
+            <span class="theme-slot"></span>
             <button id="logoutBtn">Logout</button>
         </div>
     </nav>
 
     <main class="container">
-        <h1>Settings</h1>
+        <div class="header-row">
+            <div>
+                <h1>Settings</h1>
+            </div>
+        </div>
 
         <div class="card" style="max-width: 640px; margin-top: 1.5rem;">
-            <h2 style="color: var(--danger);">Danger Zone</h2>
-            <p>Clearing the database deletes <strong>all</strong> accounts, departments, collections, records, courses and corrections. The app will return to first-run setup and show the registration page again. This cannot be undone.</p>
-            <button class="btn-danger" id="clearBtn" style="margin-top: 1rem;">Clear Database</button>
+            <h2>Danger zone</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Clearing the database deletes <strong>all</strong> accounts, departments, collections, records, courses and corrections. The app returns to first-run setup and shows the registration page again. This cannot be undone.</p>
+            <button class="btn-danger" id="clearBtn" style="margin-top: 1rem;">Clear database</button>
             <div id="status" style="margin-top: 1rem;"></div>
         </div>
     </main>

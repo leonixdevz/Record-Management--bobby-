@@ -3,7 +3,6 @@
 .vscode/
 .claude/
 .playwright-mcp/
-
 # Logs
 *.log
 
@@ -15,6 +14,7 @@ build/
 dist/
 
 # Temporary files
+data/
 tmp/
 temp/
 *.tmp

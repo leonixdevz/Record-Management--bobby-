@@ -454,15 +454,41 @@ app.get('/api/student/courses', (req, res) => {
   });
 });
 
-// Add a course to a student's record (admin only)
+// Build a course object from raw input, computing its grade point.
+function buildCourse(recordId, course) {
+  const { session, level, semester, courseCode, courseTitle, creditUnits, score } = course;
+  return {
+    id: recordId + '-' + crypto.randomUUID(),
+    session: session || '',
+    level: level || '',
+    semester: semester === undefined ? 1 : semester,
+    courseCode: String(courseCode || '').trim().toUpperCase(),
+    courseTitle: String(courseTitle || '').trim(),
+    creditUnits,
+    score: score === undefined ? 0 : score,
+    gradePoint: scoreToGradePoint(score)
+  };
+}
+
+// Add course(s) to a student's record (admin only).
+// Accepts either a single course object (backward compatible) or `{ courses: [...] }`
+// so admins can register a whole list of courses at once.
 app.post('/api/courses/:recordId', authMiddleware, (req, res) => {
   const recordId = req.params.recordId;
-  const course = req.body || {};
-  const { session, level, semester, courseCode, courseTitle, creditUnits, score } = course;
+  const body = req.body || {};
+  const coursesInput = Array.isArray(body.courses) ? body.courses : [body];
 
   if (!recordId) return res.status(400).json({ error: 'recordId is required' });
-  if (!courseCode || !creditUnits) {
-    return res.status(400).json({ error: 'Course code and credit units are required' });
+  if (coursesInput.length === 0) {
+    return res.status(400).json({ error: 'At least one course is required' });
+  }
+  if (coursesInput.length > 200) {
+    return res.status(400).json({ error: 'A maximum of 200 courses can be added at once' });
+  }
+  for (const c of coursesInput) {
+    if (!c || !String(c.courseCode || '').trim() || !c.creditUnits) {
+      return res.status(400).json({ error: 'Each course needs a course code and credit units' });
+    }
   }
 
   db.get('SELECT id, data FROM records WHERE id = ?', [recordId], (err, row) => {
@@ -472,23 +498,14 @@ app.post('/api/courses/:recordId', authMiddleware, (req, res) => {
     const record = JSON.parse(row.data);
     record.courses = record.courses || [];
 
-    const newCourse = {
-      id: recordId + '-' + Date.now(),
-      session: session || '',
-      level: level || '',
-      semester: semester === undefined ? 1 : semester,
-      courseCode,
-      courseTitle: courseTitle || '',
-      creditUnits,
-      score: score === undefined ? 0 : score,
-      gradePoint: scoreToGradePoint(score)
-    };
-
-    record.courses.push(newCourse);
+    // Merge shared fields (session, level, semester) from the body into each
+    // course item; per-course values still win so mixed submissions work.
+    const newCourses = coursesInput.map(c => buildCourse(recordId, { ...body, ...c }));
+    record.courses.push(...newCourses);
 
     db.run('UPDATE records SET data = ? WHERE id = ?', [JSON.stringify(record), recordId], function(err2) {
       if (err2) return res.status(500).json({ error: 'Database error' });
-      res.status(201).json(newCourse);
+      res.status(201).json({ added: newCourses.length, courses: newCourses });
     });
   });
 });
@@ -576,23 +593,6 @@ app.post('/api/corrections/:id/:action', authMiddleware, (req, res) => {
           apply();
         }
       );
-    });
-  });
-});
-
-// Get the primary collection (the one created during onboarding)
-// If none, returns the most recently created collection.
-app.get('/api/collection/primary', authMiddleware, (req, res) => {
-  db.all('SELECT id, name, schema, createdAt FROM collections ORDER BY createdAt DESC LIMIT 1', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
-    if (!rows.length) return res.status(404).json({ error: 'No collections found' });
-    const row = rows[0];
-    res.json({
-      id: row.id,
-      name: row.name,
-      schema: JSON.parse(row.schema),
-      createdAt: row.createdAt,
-      count: 0 // could compute count but not needed for now
     });
   });
 });
@@ -1064,7 +1064,6 @@ app.post('/api/records/:colId/deduplicate', authMiddleware, (req, res) => {
 // ---------------------------------------------------------------------------
 app.post('/api/admin/clear', authMiddleware, (req, res) => {
   db.serialize(() => {
-    db.run('DELETE FROM courses');
     db.run('DELETE FROM corrections');
     db.run('DELETE FROM records');
     db.run('DELETE FROM collections');
