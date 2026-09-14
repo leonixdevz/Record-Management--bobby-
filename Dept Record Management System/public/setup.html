@@ -58,7 +58,7 @@
 
         <div class="form-group">
             <label>Collection Name</label>
-            <input type="text" id="colName" placeholder="e.g. Students" value="dept-students-field">
+            <input type="text" id="colName" placeholder="e.g. Students">
         </div>
 
         <div class="schema-builder">
@@ -146,7 +146,7 @@
                 card.innerHTML = `
                     <div class="drag-handle">⠿</div>
                     <div class="form-group" style="margin:0">
-                        <input type="text" class="field-input" placeholder="Label" value="${field.label || ''}" onchange="updateFieldLabel(${field.id}, this.value)">
+                        <input type="text" class="field-input" placeholder="Label" value="${(field.label || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" onchange="updateFieldLabel(${field.id}, this.value)">
                     </div>
                     <div class="form-group" style="margin:0">
                         <select class="field-input" onchange="updateField(${field.id}, 'type', this.value)">
@@ -174,29 +174,33 @@
 
                 builderList.appendChild(card);
             });
+        }
 
-            builderList.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const draggingElement = document.querySelector('.dragging');
-                if (!draggingElement) return;
-                const afterElement = getDragAfterElement(builderList, e.clientY);
-                if (afterElement == null) {
-                    builderList.appendChild(draggingElement);
-                } else {
-                    builderList.insertBefore(draggingElement, afterElement);
-                }
+        // Attach drag listeners once — attaching inside renderBuilder() would
+        // stack duplicates on every re-render and make reordering janky.
+        builderList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const draggingElement = document.querySelector('.dragging');
+            if (!draggingElement) return;
+            const afterElement = getDragAfterElement(builderList, e.clientY);
+            if (afterElement == null) {
+                builderList.appendChild(draggingElement);
+            } else {
+                builderList.insertBefore(draggingElement, afterElement);
+            }
+        });
+
+        builderList.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const newOrder = Array.from(builderList.children).map(child => {
+                const id = parseInt(child.dataset.id);
+                return currentSchema.find(f => f.id === id);
             });
-
-            builderList.addEventListener('drop', (e) => {
-                e.preventDefault();
-                const newOrder = Array.from(builderList.children).map(child => {
-                    const id = parseInt(child.dataset.id);
-                    return currentSchema.find(f => f.id === id);
-                });
+            if (newOrder.every(Boolean)) {
                 currentSchema = newOrder;
                 renderBuilder();
-            });
-        }
+            }
+        });
 
         function getDragAfterElement(container, y) {
             const draggableElements = [...container.querySelectorAll('.field-card:not(.dragging)')];

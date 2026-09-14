@@ -360,6 +360,7 @@ app.post('/api/setup/onboard', authMiddleware, (req, res) => {
       function(err) {
         if (err) return res.status(500).json({ error: 'Database error' });
         setSetting('setup_done', '1');
+        setSetting('primary_collection', id);
         res.json({ collection: { id, name, schema }, message: 'Onboarding complete' });
       }
     );
@@ -370,6 +371,7 @@ app.post('/api/setup/onboard', authMiddleware, (req, res) => {
 
       const finish = (col) => {
         setSetting('setup_done', '1');
+        setSetting('primary_collection', col.id);
         res.json({ collection: col, message: 'Onboarding complete' });
       };
 
@@ -644,6 +646,7 @@ app.post('/api/collections', authMiddleware, (req, res) => {
         if (err2) {
           return res.status(500).json({ error: 'Database error' });
         }
+        setSetting('primary_collection', id);
         res.status(201).json({ id, name, schema, createdAt: new Date().toISOString() });
       }
     );

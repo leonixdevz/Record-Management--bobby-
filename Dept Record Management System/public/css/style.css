@@ -1238,6 +1238,200 @@ body,
 }
 
 /* ------------------------------------------------------------------ */
+/* Schema builder (setup wizard + schema manager)                      */
+/* ------------------------------------------------------------------ */
+.schema-builder {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.builder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.builder-header span:last-child {
+    font-weight: 500;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.builder-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.builder-list:empty {
+    display: none;
+}
+
+.field-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr 130px auto auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-sm);
+}
+
+.field-card.dragging {
+    opacity: 0.55;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--text-light);
+    font-size: 1.1rem;
+    user-select: none;
+    padding-right: 0.25rem;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.field-card .form-group {
+    margin: 0;
+}
+
+.field-input {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    background: var(--card-bg);
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
+}
+
+.field-checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.field-checkbox-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.btn-add-field {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: transparent;
+    color: var(--accent);
+    border: 1px dashed var(--accent);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-add-field:hover {
+    background: var(--accent-soft);
+}
+
+.builder-footer {
+    padding: 0 1rem 1rem;
+}
+
+.btn-remove-field {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    background: transparent;
+    color: var(--text-light);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-remove-field:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+/* Sub-field editor (list-type fields) */
+.sb-subeditor {
+    grid-column: 2 / -1;
+    margin-top: 0.25rem;
+    padding: 0.85rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.sb-subeditor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.sb-subeditor-header .btn-add-field {
+    width: auto;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+}
+
+.sb-subfield-row {
+    display: grid;
+    grid-template-columns: 1fr 130px auto auto;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+}
+
+.sb-subfield-row:last-child {
+    margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------ */
 /* Dark theme                                                          */
 /* ------------------------------------------------------------------ */
 :root[data-theme="dark"] {
